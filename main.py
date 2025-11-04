@@ -18,7 +18,6 @@ cd0 = 0.025
 cl0 = 0.3
 cla = 5.5 #per rad
 k = 0.06
-rho = 1.225
 A = 0.01
 dt = 0.01
 t_final = 100.0
@@ -56,10 +55,10 @@ try:
             current_theta = flight_control_data.theta
             current_thrust = flight_control_data.thrust
 
-        k1 = der.derivatives(state, m, cd0, cla, cl0, k, A, rho, current_thrust,current_theta)
-        k2 = der.derivatives(state + k1 * dt / 2, m, cd0, cla, cl0, k, A, rho, current_thrust, current_theta)
-        k3 = der.derivatives(state + k2 * dt / 2, m, cd0, cla, cl0, k, A, rho, current_thrust,current_theta)
-        k4 = der.derivatives(state + k3 * dt, m, cd0, cla, cl0, k, A, rho, current_thrust,current_theta)
+        k1 = der.derivatives(state, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
+        k2 = der.derivatives(state + k1 * dt / 2, m, cd0, cla, cl0, k, A, current_thrust, current_theta)
+        k3 = der.derivatives(state + k2 * dt / 2, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
+        k4 = der.derivatives(state + k3 * dt, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
         
         state = state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
         t += dt
