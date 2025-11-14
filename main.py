@@ -9,24 +9,38 @@ import controls
 
 # --- Initial Conditions ---
 m = 1.0
+
 x_0 = 0.0
 y_0 = 100.0
 u_0 = 20.0
 v_0 = 0.0
-theta_initial = 0.68
+theta_0 = 0.68
+q_0 = 0.0
+
 cd0 = 0.025
 cl0 = 0.3
 cla = 5.5 #per rad
+I_y = 1.5 #kg.m^2
+c_bar = 0.2 #m
+C_M0 = 0.05
+C_Malpha = -0.6
+C_Mq = -3.0
+C_Mde = -1.5
 k = 0.06
 A = 0.01
+
 dt = 0.01
 t_final = 100.0
-initial_thrust = 2.44
+
+# --- CONTROL INITIALIZATION ---
+initial_de = 0.0       # Initial elevator deflection (delta_e) is zero
+initial_thrust = 2.44 # Initial thrust for level flight
+
 
 # --- Initialization ---
-flight_control_data = controls.FlightControl(theta_initial, initial_thrust)
+flight_control_data = controls.FlightControl(initial_de, initial_thrust)
 keyboard_controller = controls.KeyboardController(flight_control_data)
-state = np.array([x_0, y_0, u_0, v_0])
+state = np.array([x_0, y_0, u_0, v_0, theta_0,q_0])
 t = 0.0
 
 # Lists to store position data for plotting
@@ -52,13 +66,15 @@ keyboard_controller.start()
 try:
     while state[1] >= 0 and t < t_final:
         with flight_control_data.lock:
-            current_theta = flight_control_data.theta
+            current_de = flight_control_data.delta_e
             current_thrust = flight_control_data.thrust
+            constants = (m, cd0, cla, cl0, k, A, I_y, c_bar, C_M0, C_Malpha, C_Mq, C_Mde)
 
-        k1 = der.derivatives(state, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
-        k2 = der.derivatives(state + k1 * dt / 2, m, cd0, cla, cl0, k, A, current_thrust, current_theta)
-        k3 = der.derivatives(state + k2 * dt / 2, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
-        k4 = der.derivatives(state + k3 * dt, m, cd0, cla, cl0, k, A, current_thrust,current_theta)
+
+        k1 = der.derivatives(state, *constants, current_thrust, current_de)
+        k2 = der.derivatives(state + k1 * dt / 2, *constants, current_thrust, current_de)
+        k3 = der.derivatives(state + k2 * dt / 2, *constants, current_thrust, current_de)
+        k4 = der.derivatives(state + k3 * dt, *constants, current_thrust, current_de)
         
         state = state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
         t += dt
